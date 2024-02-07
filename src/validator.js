@@ -99,7 +99,11 @@ class Validator {
 
                 rules.push({
                     name: self.titleCase(args[0], '_'),
-                    params: args[1] ? args[0] === 'regex' ? args[1] : args[1].split(',') : [],
+                    params: args[1]
+                        ? args[0] === 'regex'
+                            ? args[1]
+                            : args[1].split(',')
+                        : [],
                 });
             }
         });
@@ -172,10 +176,10 @@ class Validator {
         if (params.length < count) {
             throw new Error(
                 'Validation rule ' +
-                rule +
-                ' requires at least ' +
-                count +
-                ' parameters'
+                    rule +
+                    ' requires at least ' +
+                    count +
+                    ' parameters'
             );
         }
     }
@@ -192,11 +196,9 @@ class Validator {
         this.errors = {};
         this.failedRules = {};
 
-        const hasRequiredFields = this.rules.some(item => (
-            item.rules.some(rule => (
-                rule.name === 'Required'
-            ))
-        ))
+        const hasRequiredFields = this.rules.some((item) =>
+            item.rules.some((rule) => rule.name === 'Required')
+        );
 
         if (this.isEmptyObject(this.data) && !hasRequiredFields) {
             return true;
@@ -207,6 +209,16 @@ class Validator {
 
             if (self.isEmptyValueAndContainsNullableRule(item)) {
                 return false;
+            }
+
+            // Skip item validation if it is not implicitly required and has no value
+            if (
+                typeof self.data[name] === 'undefined' &&
+                !item.rules.some((rule) => {
+                    return self.isImplicit(rule.name);
+                })
+            ) {
+                return;
             }
 
             item.rules

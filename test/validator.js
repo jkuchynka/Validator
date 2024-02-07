@@ -14,6 +14,34 @@ const data = {
 
 const v = new Validator(data, rules);
 
+// Rules that are not implicitly expected to be set in data
+const nonImplicitRules = [
+    'after:2012',
+    'alpha',
+    'alpha_num',
+    'alpha_dash',
+    'array',
+    'before:2012',
+    'between:1,10',
+    'boolean',
+    'date',
+    'digits:12',
+    'digits_between:9,10',
+    'email',
+    'in:red,blue',
+    'integer',
+    'ip',
+    'json',
+    'max:12',
+    'min:6',
+    'not_in:1,2,3',
+    'numeric',
+    'regex:a-z',
+    'size:32',
+    'string',
+    'url',
+];
+
 describe('Validator', () => {
     describe('is instantiable', () => {
         it('instantiable using new Validator(...)', () => {
@@ -177,11 +205,20 @@ describe('Validator', () => {
 
         it('converts snake_case rule names to TitleCase functions', () => {
             const rules = { id: 'mongo_id:min=24,max=24' };
-            const validator = Validator.make({ id: '5915b8434479e9b7e11db37c' }, rules);
+            const validator = Validator.make(
+                { id: '5915b8434479e9b7e11db37c' },
+                rules
+            );
 
-            validator.extend('mongo_id', isMongoId, ':attr must be a valid mongo id');
+            validator.extend(
+                'mongo_id',
+                isMongoId,
+                ':attr must be a valid mongo id'
+            );
 
-            expect(validator.findRuleMethod({ name: 'MongoId' })).to.equal(isMongoId);
+            expect(validator.findRuleMethod({ name: 'MongoId' })).to.equal(
+                isMongoId
+            );
         });
     });
 
@@ -303,9 +340,27 @@ describe('Validator', () => {
         });
 
         it('should fail if data is defined as an empty object and the field is required', () => {
-            let v = Validator.make({}, { name: 'required|email', potato: 'max:3' },);
+            let v = Validator.make(
+                {},
+                { name: 'required|email', potato: 'max:3' }
+            );
 
             expect(v.fails()).to.be.true;
+        });
+
+        nonImplicitRules.forEach((rule) => {
+            it(
+                'should not fail if data is not set on non-empty object and rule is not implicit, rule: ' +
+                    rule,
+                () => {
+                    let v = Validator.make(
+                        { pizza: 'Pepperoni' },
+                        { notSetField: rule }
+                    );
+
+                    expect(v.fails()).to.be.false;
+                }
+            );
         });
     });
 
@@ -745,11 +800,14 @@ describe('Validator', () => {
         });
 
         it('should validate regex expressions with commas', () => {
-            const v = Validator.make({
-                number: '3123'
-            }, {
-                number: [`regex:/[0-9]{1,8}/`],
-            });
+            const v = Validator.make(
+                {
+                    number: '3123',
+                },
+                {
+                    number: [`regex:/[0-9]{1,8}/`],
+                }
+            );
 
             expect(v.passes()).to.be.true;
         });
